@@ -1,0 +1,149 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    Timeout: 30
+
+Resources:
+  WebhookApiFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      PackageType: Image
+      MemorySize: 128
+      Architectures:
+        - x86_64
+      Events:
+        CatchAll:
+          Type: Api
+          Properties:
+            Path: /
+            Method: POST
+    Metadata:
+      DockerTag: go1.x-v1
+      DockerContext: ./webhook-api
+      Dockerfile: Dockerfile
+
+  GoFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      PackageType: Image
+      MemorySize: 128
+      Role: !GetAtt WebhookApiFunctionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        ScheduledFunction:
+          Type: Schedule
+          Properties:
+            Schedule: 'rate(1 minute)'
+            Input: |
+              {
+              "q": "golang"
+              }
+    Metadata:
+      DockerTag: go1.x-v1
+      DockerContext: ./go-func
+      Dockerfile: Dockerfile
+
+  RustFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      PackageType: Image
+      MemorySize: 128
+      Role: !GetAtt WebhookApiFunctionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        ScheduledFunction:
+          Type: Schedule
+          Properties:
+            Schedule: 'rate(1 minute)'
+            Input: |
+              {
+              "q": "rust"
+              }
+    Metadata:
+      DockerTag: rust-latest
+      DockerContext: ./rust-func
+      Dockerfile: Dockerfile
+
+  PythonFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      PackageType: Image
+      MemorySize: 128
+      Role: !GetAtt WebhookApiFunctionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        ScheduledFunction:
+          Type: Schedule
+          Properties:
+            Schedule: 'rate(1 minute)'
+            Input: |
+              {
+              "q": "python"
+              }
+    Metadata:
+      DockerTag: python-v3.9
+      DockerContext: ./python-func
+      Dockerfile: Dockerfile
+
+  NodeFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      PackageType: Image
+      MemorySize: 128
+      Role: !GetAtt WebhookApiFunctionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        ScheduledFunction:
+          Type: Schedule
+          Properties:
+            Schedule: 'rate(1 minute)'
+            Input: |
+              {
+              "q": "nodejs"
+              }
+    Metadata:
+      DockerTag: node-v16
+      DockerContext: ./node-func
+      Dockerfile: Dockerfile
+
+  JavaFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      PackageType: Image
+      MemorySize: 128
+      Role: !GetAtt WebhookApiFunctionRole.Arn
+      Architectures:
+        - x86_64
+      Environment: 
+        Variables:
+          JAVA_TOOL_OPTIONS: -XX:+TieredCompilation -XX:TieredStopAtLevel=1
+      Events:
+        ScheduledFunction:
+          Type: Schedule
+          Properties:
+            Schedule: 'rate(1 minute)'
+            Input: |
+              {
+              "q": "java"
+              }
+    Metadata:
+      DockerTag: java11
+      DockerContext: ./java-func
+      Dockerfile: Dockerfile
+
+Outputs:
+  HelloWorldAPI:
+    Description: "API Gateway endpoint URL for Prod environment for First Function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+  HelloWorldFunction:
+    Description: "First Lambda Function ARN"
+    Value: !GetAtt WebhookApiFunction.Arn
+  HelloWorldFunctionIamRole:
+    Description: "Implicit IAM Role created for Hello World function"
+    Value: !GetAtt WebhookApiFunctionRole.Arn
