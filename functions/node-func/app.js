@@ -1,6 +1,6 @@
 const https = require('https')
 
-exports.handler = (event, context) => {
+exports.handler = (event, context, callback) => {
     try {
         const data = JSON.stringify({
             q: event["q"],
@@ -15,15 +15,12 @@ exports.handler = (event, context) => {
 
         const url = 'https://xxxx.execute-api.ap-northeast-1.amazonaws.com/Prod/'
         const request = https.request(url, options, response => {
-            console.log(`statusCode: ${response.statusCode}`)
+            console.log('callback')
+            callback(null, `statusCode: ${response.statusCode}`)
         })
         request.write(data)
         request.end()
-
-        return {"statusCode": 200}
-
     } catch (err) {
-        console.log(err)
-        return err
+        callback(err)
     }
 };
